@@ -1,6 +1,8 @@
 package com.brandontate.androidwebviewselection;
 
 import android.content.Context;
+import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 /**
@@ -94,6 +96,9 @@ public class TextSelectionJavascriptInterface {
 	 */
 	@JavascriptInterface
 	public void selectionChanged(String range, String text, String handleBounds, String menuBounds){
+		if (!TextUtils.isEmpty(text)) {
+			Log.v(TAG, text);
+		}
 		if(this.listener != null)
 			this.listener.tsjiSelectionChanged(range, text, handleBounds, menuBounds);
 		
