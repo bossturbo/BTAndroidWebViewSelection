@@ -9,9 +9,6 @@ import com.blahti.drag.DragListener;
 import com.blahti.drag.DragSource;
 import com.blahti.drag.MyAbsoluteLayout;
 
-import net.londatiga.android.ActionItem;
-import net.londatiga.android.QuickAction;
-import net.londatiga.android.QuickAction.OnDismissListener;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -32,16 +29,13 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 
 public class BTWebView extends WebView implements TextSelectionJavascriptInterfaceListener, 
-	OnTouchListener, OnLongClickListener, OnDismissListener, DragListener{
+	OnTouchListener, OnLongClickListener, DragListener{
 	
 	/** The logging tag. */
 	private static final String TAG = "BTWebView";
 
 	/** Context. */
 	protected	Context	ctx;
-	
-	/** The context menu. */
-	private QuickAction mContextMenu;
 	
 	/** The drag layer for selection. */
 	private DragLayer mSelectionDragLayer;
@@ -278,9 +272,9 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 		
 		
 		this.mStartSelectionHandle = (ImageView) this.mSelectionDragLayer.findViewById(R.id.startHandle);
-		this.mStartSelectionHandle.setTag(new Integer(SELECTION_START_HANDLE));
+		this.mStartSelectionHandle.setTag(Integer.valueOf(SELECTION_START_HANDLE));
 		this.mEndSelectionHandle = (ImageView) this.mSelectionDragLayer.findViewById(R.id.endHandle);
-		this.mEndSelectionHandle.setTag(new Integer(SELECTION_END_HANDLE));
+		this.mEndSelectionHandle.setTag(Integer.valueOf(SELECTION_END_HANDLE));
 		
 		OnTouchListener handleTouchListener = new OnTouchListener(){
 
@@ -354,16 +348,6 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 		public void handleMessage(Message m){
 		
 			removeView(mSelectionDragLayer);
-			if(getParent() != null && mContextMenu != null && contextMenuVisible){
-				// This will throw an error if the webview is being redrawn.
-				// No error handling needed, just need to stop the crash.
-				try{
-					mContextMenu.dismiss();
-				}
-				catch(Exception e){
-					
-				}
-			}
 			mSelectionBounds = null;
 			mLastTouchedSelectionHandle = -1;
 			loadUrl("javascript: android.selection.clearSelection();");
@@ -486,99 +470,6 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 		
 	}
 	
-	
-	//*****************************************************
-	//*
-	//*		Context Menu Creation
-	//*
-	//*****************************************************
-	
-	/**
-	 * Shows the context menu using the given region as an anchor point.
-	 * @param region
-	 */
-	private void showContextMenu(Rect displayRect){
-		
-		// Don't show this twice
-		if(this.contextMenuVisible){
-			return;
-		}
-		
-		// Don't use empty rect
-		//if(displayRect.isEmpty()){
-		if(displayRect.right <= displayRect.left){
-			return;
-		}
-		
-		
-		
-		//Copy action item
-		ActionItem buttonOne = new ActionItem();
-		 
-		buttonOne.setTitle("Button 1");
-		buttonOne.setActionId(1);
-		buttonOne.setIcon(getResources().getDrawable(R.drawable.menu_search));
-		
-		 
-		//Highlight action item
-		ActionItem buttonTwo = new ActionItem();
-		 
-		buttonTwo.setTitle("Button 2");
-		buttonTwo.setActionId(2);
-		buttonTwo.setIcon(getResources().getDrawable(R.drawable.menu_info));
-		
-		ActionItem buttonThree = new ActionItem();
-		
-		buttonThree.setTitle("Button 3");
-		buttonThree.setActionId(3);
-		buttonThree.setIcon(getResources().getDrawable(R.drawable.menu_eraser));
-		 
-		
-		
-		// The action menu
-		mContextMenu  = new QuickAction(this.getContext());
-		mContextMenu.setOnDismissListener(this);
-		
-		// Add buttons
-		mContextMenu.addActionItem(buttonOne);
-		
-		mContextMenu.addActionItem(buttonTwo);
-		
-		mContextMenu.addActionItem(buttonThree);
-		
-		
-		
-		//setup the action item click listener
-		mContextMenu.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {
-		    
-			@Override
-			public void onItemClick(QuickAction source, int pos,
-				int actionId) {
-				// TODO Auto-generated method stub
-				if (actionId == 1) { 
-					// Do Button 1 stuff
-					Log.i(TAG, "Hit Button 1");
-		        } 
-				else if (actionId == 2) { 
-					// Do Button 2 stuff
-					Log.i(TAG, "Hit Button 2");
-		        } 
-		        else if (actionId == 3) { 
-		        	// Do Button 3 stuff
-					Log.i(TAG, "Hit Button 3");
-		        }
-				
-				contextMenuVisible = false;
-					
-			}
-			
-		});
-		
-		this.contextMenuVisible = true;
-		mContextMenu.show(this, displayRect);
-	}
-	
-	
 	//*****************************************************
 	//*
 	//*		OnDismiss Listener
@@ -663,11 +554,7 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 				this.startSelectionMode();
 			}
 			
-			// This will send the menu rect
-			this.showContextMenu(displayRect);
-			
 			drawSelectionHandles();
-			
 			
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
