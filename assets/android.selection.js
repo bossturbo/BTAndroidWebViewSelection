@@ -58,22 +58,42 @@ android.selection.longTouch = function() {
 	   	// if current selection clear it.
 	   	var sel = window.getSelection();
 	   	
-	   	var oneWordCaret = document.caretRangeFromPoint(android.selection.lastTouchPoint.x, android.selection.lastTouchPoint.y);
-	   	oneWordCaret.expand("word");
-			
+	   	var range = document.caretRangeFromPoint(android.selection.lastTouchPoint.x, android.selection.lastTouchPoint.y);
+	   	range.expand("word");
 	   	
-	   	sel.addRange(oneWordCaret);
+	   	var text = range.toString();
+	   	if (text.length == 1) {
+	   		var baseKind = jpntext.kind(text);
+   			try {
+	   			do {
+		   			range.setEnd(range.endContainer, range.endOffset + 1);
+		   			text = range.toString();
+		   			var kind = jpntext.kind(text);
+	   			} while (baseKind == kind);
+	   			range.setEnd(range.endContainer, range.endOffset - 1);
+   			}
+   			catch (e) {
+   				// pass
+   			}
+   			try {
+	   			do {
+		   			range.setStart(range.startContainer, range.startOffset - 1);
+		   			text = range.toString();
+		   			var kind = jpntext.kind(text);
+	   			} while (baseKind == kind);
+	   			range.setStart(range.startContainer, range.startOffset + 1);
+   			}
+   			catch (e) {
+   				// pass
+   			}
+	   	}
 	   	
-	   	var temp = sel.getRangeAt(0);
+	   	sel.addRange(range);
 	   	
 	   	android.selection.saveSelectionStart();
 	   	android.selection.saveSelectionEnd();
 	   	
-	   	
-	   	// Show the context menu in app
 	   	android.selection.selectionChanged();
-	   	//android.selection.selectBetweenHandles();
-	   	
 	 }
 	 catch(err){
 	 	window.TextSelection.jsError(err);
@@ -108,14 +128,13 @@ android.selection.selectionChanged = function(){
 		var endRange = document.createRange();
     	endRange.setStart(range.endContainer, range.endOffset);
     	endRange.insertNode(selectionEnd[0]);
-	    
-	   	
-	   	// Create the bounds json object for the selection
+    	
+    	debug.log("range: " + range.startOffset + ", " + range.endOffest);
 	   	var handleBounds = "{'left': " + selectionStart.offset().left + ", ";
-	   	handleBounds += "'top': " + selectionStart.offset().top + ", ";
+	   	handleBounds += "'top': " + (selectionStart.offset().top + selectionStart.height()) + ", ";
 	   	handleBounds += "'right': " + selectionEnd.offset().left + ", ";
-	   	handleBounds += "'bottom': " + selectionEnd.offset().top + "}";
-	   	
+	   	handleBounds += "'bottom': " + (selectionEnd.offset().top + selectionEnd.height()) + "}";
+	   	debug.log("handle: " + handleBounds);
 	   	
 	   	// Pull the spans
 	   	selectionStart.remove();
@@ -124,14 +143,6 @@ android.selection.selectionChanged = function(){
 	   	// Reset range
 	   	sel.removeAllRanges();
 	   	sel.addRange(range);
-	   	
-	   	// Menu bounds
-	   	var rect = range.getBoundingClientRect();
-	   	
-	   	var menuBounds = "{'left': " + rect.left + ", ";
-	   	menuBounds += "'top': " + rect.top + ", ";
-	   	menuBounds += "'right': " + rect.right + ", ";
-	   	menuBounds += "'bottom': " + rect.bottom + "}";
 	   	
 	   	// Rangy
 	   	var rangyRange = android.selection.getRange();
@@ -143,7 +154,7 @@ android.selection.selectionChanged = function(){
 	   	window.TextSelection.setContentWidth(document.body.clientWidth);
 	   	
 	   	// Tell the interface that the selection changed
-	   	window.TextSelection.selectionChanged(rangyRange, text, handleBounds, menuBounds);
+	   	window.TextSelection.selectionChanged(rangyRange, text, handleBounds);
 	}
 	catch(err){
 		window.TextSelection.jsError(err);

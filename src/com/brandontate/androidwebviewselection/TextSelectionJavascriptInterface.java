@@ -95,12 +95,12 @@ public class TextSelectionJavascriptInterface {
 	 * @param showUnHighlight
 	 */
 	@JavascriptInterface
-	public void selectionChanged(String range, String text, String handleBounds, String menuBounds){
+	public void selectionChanged(String range, String text, String handleBounds){
 		if (!TextUtils.isEmpty(text)) {
 			Log.v(TAG, text);
 		}
 		if(this.listener != null)
-			this.listener.tsjiSelectionChanged(range, text, handleBounds, menuBounds);
+			this.listener.tsjiSelectionChanged(range, text, handleBounds);
 		
 	}
 	

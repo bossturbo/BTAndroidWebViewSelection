@@ -25,6 +25,7 @@ import android.view.View.OnTouchListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.ImageView;
 
@@ -227,6 +228,7 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 		// Javascript interfaces
 		this.textSelectionJSInterface = new TextSelectionJavascriptInterface(context, this);		
 		this.addJavascriptInterface(this.textSelectionJSInterface, this.textSelectionJSInterface.getInterfaceName());
+		this.addJavascriptInterface(new JSInterface(), "debug");
 		
 		
 		// Create the selection handles
@@ -376,23 +378,36 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 	 */
 	private Handler drawSelectionHandlesHandler = new Handler(){
 		public void handleMessage(Message m){
+			final float INNER_PADDING_RATIO = 11.0f / 47.0f;
 			
 			MyAbsoluteLayout.LayoutParams startParams = (com.blahti.drag.MyAbsoluteLayout.LayoutParams) mStartSelectionHandle.getLayoutParams();
+			/*
 			startParams.x = (int) (mSelectionBounds.left - mStartSelectionHandle.getDrawable().getIntrinsicWidth());
 			startParams.y = (int) (mSelectionBounds.top - mStartSelectionHandle.getDrawable().getIntrinsicHeight());
+			*/
+			final int startWidth = mStartSelectionHandle.getDrawable().getIntrinsicWidth();
+			startParams.x = (int) (mSelectionBounds.left - startWidth * (1.0f - INNER_PADDING_RATIO));
+			startParams.y = (int) (mSelectionBounds.top);
 		
 			// Stay on screen.
-			startParams.x = (startParams.x < 0) ? 0 : startParams.x;
+			final int startMinLeft = -(int)(startWidth * (1 - INNER_PADDING_RATIO));
+			startParams.x = (startParams.x < startMinLeft) ? startMinLeft : startParams.x;
 			startParams.y = (startParams.y < 0) ? 0 : startParams.y;
 			
 			mStartSelectionHandle.setLayoutParams(startParams);
 			
 			MyAbsoluteLayout.LayoutParams endParams = (com.blahti.drag.MyAbsoluteLayout.LayoutParams) mEndSelectionHandle.getLayoutParams();
+			/*
 			endParams.x = (int) mSelectionBounds.right;
 			endParams.y = (int) mSelectionBounds.bottom;
+			*/
+			final int endWidth = mEndSelectionHandle.getDrawable().getIntrinsicWidth();
+			endParams.x = (int) (mSelectionBounds.right - endWidth * INNER_PADDING_RATIO);
+			endParams.y = (int) (mSelectionBounds.bottom);
 			
 			// Stay on screen
-			endParams.x = (endParams.x < 0) ? 0 : endParams.x;
+			final int endMinLeft = -(int)(endWidth * (1- INNER_PADDING_RATIO));
+			endParams.x = (endParams.x < endMinLeft) ? endMinLeft : endParams.x;
 			endParams.y = (endParams.y < 0) ? 0 : endParams.y;
 			
 			mEndSelectionHandle.setLayoutParams(endParams);
@@ -522,15 +537,11 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 	 * @param range
 	 * @param text
 	 * @param handleBounds
-	 * @param menuBounds
-	 * @param showHighlight
-	 * @param showUnHighlight
 	 */
-	public void tsjiSelectionChanged(String range, String text, String handleBounds, String menuBounds){
+	public void tsjiSelectionChanged(String range, String text, String handleBounds){
 		try {
-			JSONObject selectionBoundsObject = new JSONObject(handleBounds);
-			
-			float scale = getDensityIndependentValue(this.getScale(), ctx);
+			final JSONObject selectionBoundsObject = new JSONObject(handleBounds);
+			final float scale = getDensityIndependentValue(this.getScale(), ctx);
 			
 			Rect handleRect = new Rect();
 			handleRect.left = (int) (getDensityDependentValue(selectionBoundsObject.getInt("left"), getContext()) * scale);
@@ -542,14 +553,6 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 			this.selectedRange = range;
 			this.selectedText = text;
 
-			JSONObject menuBoundsObject = new JSONObject(menuBounds);
-			
-			Rect displayRect = new Rect();
-			displayRect.left = (int) (getDensityDependentValue(menuBoundsObject.getInt("left"), getContext()) * scale);
-			displayRect.top = (int) (getDensityDependentValue(menuBoundsObject.getInt("top") - 25, getContext()) * scale);
-			displayRect.right = (int) (getDensityDependentValue(menuBoundsObject.getInt("right"), getContext()) * scale);
-			displayRect.bottom = (int) (getDensityDependentValue(menuBoundsObject.getInt("bottom") + 25, getContext()) * scale);
-			
 			if(!this.isInSelectionMode()){
 				this.startSelectionMode();
 			}
@@ -560,8 +563,6 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	
@@ -621,4 +622,13 @@ public class BTWebView extends WebView implements TextSelectionJavascriptInterfa
 		//return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, val, metrics);
 		
 	}
+	
+	class JSInterface {
+        public JSInterface() {
+        }
+        @JavascriptInterface
+        public void log(String msg) {
+            Log.i(TAG, msg);
+        }
+    }	
 }
